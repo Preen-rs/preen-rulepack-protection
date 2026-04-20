@@ -99,13 +99,18 @@ jobs:
 
           bundle = json.loads(pathlib.Path("manifest.bundle.json").read_text(encoding="utf-8"))
           signature = (
-              bundle.get("content", {})
+              bundle.get("messageSignature", {}).get("signature")
+              or bundle.get("content", {})
               .get("messageSignature", {})
               .get("signature")
           )
           cert = (
               bundle.get("verificationMaterial", {})
               .get("certificate", {})
+              .get("rawBytes")
+              or bundle.get("verificationMaterial", {})
+              .get("x509CertificateChain", {})
+              .get("certificates", [{}])[0]
               .get("rawBytes")
           )
           if not signature:
@@ -155,13 +160,18 @@ jobs:
 
           bundle = json.loads(pathlib.Path("manifest.ci.bundle.json").read_text(encoding="utf-8"))
           signature = (
-              bundle.get("content", {})
+              bundle.get("messageSignature", {}).get("signature")
+              or bundle.get("content", {})
               .get("messageSignature", {})
               .get("signature")
           )
           cert = (
               bundle.get("verificationMaterial", {})
               .get("certificate", {})
+              .get("rawBytes")
+              or bundle.get("verificationMaterial", {})
+              .get("x509CertificateChain", {})
+              .get("certificates", [{}])[0]
               .get("rawBytes")
           )
           if not signature:

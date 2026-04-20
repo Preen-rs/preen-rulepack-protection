@@ -1,7 +1,7 @@
 schema_version = 1
 pack_id = "preen-rs.protection.base"
 name = "Preen Protection Base"
-version = "0.1.0"
+version = "0.1.1"
 description = "Official base capability pack for protection-focused Smart Care checks on macOS and Linux."
 author = "Preen Team"
 license = "MIT"

@@ -90,31 +90,40 @@ jobs:
         run: |
           cosign sign-blob \
             --yes \
-            --bundle manifest.sig \
+            --bundle manifest.bundle.json \
             manifest.toml
           python3 - <<'PY'
           import base64
           import json
           import pathlib
 
-          bundle = json.loads(pathlib.Path("manifest.sig").read_text(encoding="utf-8"))
+          bundle = json.loads(pathlib.Path("manifest.bundle.json").read_text(encoding="utf-8"))
+          signature = (
+              bundle.get("content", {})
+              .get("messageSignature", {})
+              .get("signature")
+          )
           cert = (
               bundle.get("verificationMaterial", {})
               .get("certificate", {})
               .get("rawBytes")
           )
+          if not signature:
+              raise SystemExit("manifest.bundle.json is missing signature")
           if not cert:
-              raise SystemExit("manifest.sig bundle is missing certificate")
+              raise SystemExit("manifest.bundle.json is missing certificate")
           der = base64.b64decode(cert)
           b64 = base64.b64encode(der).decode("ascii")
           lines = "\n".join(b64[i:i+64] for i in range(0, len(b64), 64))
           pem = f"-----BEGIN CERTIFICATE-----\n{lines}\n-----END CERTIFICATE-----\n"
+          pathlib.Path("manifest.sig").write_text(signature.strip() + "\n", encoding="utf-8")
           pathlib.Path("manifest.cert").write_text(pem, encoding="utf-8")
           PY
       - name: Verify generated manifest signature
         run: |
           cosign verify-blob \
-            --bundle manifest.sig \
+            --signature manifest.sig \
+            --certificate manifest.cert \
             --certificate-identity "https://github.com/${GITHUB_REPOSITORY}/.github/workflows/release-manual.yml@refs/heads/main" \
             --certificate-oidc-issuer "https://token.actions.githubusercontent.com" \
             manifest.toml
@@ -137,25 +146,33 @@ jobs:
         run: |
           cosign sign-blob \
             --yes \
-            --bundle manifest.ci.sig \
+            --bundle manifest.ci.bundle.json \
             manifest.toml
           python3 - <<'PY'
           import base64
           import json
           import pathlib
 
-          bundle = json.loads(pathlib.Path("manifest.ci.sig").read_text(encoding="utf-8"))
+          bundle = json.loads(pathlib.Path("manifest.ci.bundle.json").read_text(encoding="utf-8"))
+          signature = (
+              bundle.get("content", {})
+              .get("messageSignature", {})
+              .get("signature")
+          )
           cert = (
               bundle.get("verificationMaterial", {})
               .get("certificate", {})
               .get("rawBytes")
           )
+          if not signature:
+              raise SystemExit("manifest.ci.bundle.json is missing signature")
           if not cert:
-              raise SystemExit("manifest.ci.sig bundle is missing certificate")
+              raise SystemExit("manifest.ci.bundle.json is missing certificate")
           der = base64.b64decode(cert)
           b64 = base64.b64encode(der).decode("ascii")
           lines = "\n".join(b64[i:i+64] for i in range(0, len(b64), 64))
           pem = f"-----BEGIN CERTIFICATE-----\n{lines}\n-----END CERTIFICATE-----\n"
+          pathlib.Path("manifest.ci.sig").write_text(signature.strip() + "\n", encoding="utf-8")
           pathlib.Path("manifest.ci.pem").write_text(pem, encoding="utf-8")
           PY
       - name: Create GitHub release

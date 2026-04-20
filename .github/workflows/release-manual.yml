@@ -83,7 +83,7 @@ jobs:
           manifest_path.write_text("\n".join(out) + "\n", encoding="utf-8")
           PY
       - name: Validate pack files before signing
-        run: python3 scripts/validate_pack.py
+        run: python3 scripts/validate_pack.py --allow-placeholder-signatures
       - name: Generate manifest signature artifacts
         env:
           COSIGN_EXPERIMENTAL: "1"

@@ -105,7 +105,11 @@ jobs:
           )
           if not cert:
               raise SystemExit("manifest.sig bundle is missing certificate")
-          pathlib.Path("manifest.cert").write_bytes(base64.b64decode(cert))
+          der = base64.b64decode(cert)
+          b64 = base64.b64encode(der).decode("ascii")
+          lines = "\n".join(b64[i:i+64] for i in range(0, len(b64), 64))
+          pem = f"-----BEGIN CERTIFICATE-----\n{lines}\n-----END CERTIFICATE-----\n"
+          pathlib.Path("manifest.cert").write_text(pem, encoding="utf-8")
           PY
       - name: Verify generated manifest signature
         run: |
@@ -148,7 +152,11 @@ jobs:
           )
           if not cert:
               raise SystemExit("manifest.ci.sig bundle is missing certificate")
-          pathlib.Path("manifest.ci.pem").write_bytes(base64.b64decode(cert))
+          der = base64.b64decode(cert)
+          b64 = base64.b64encode(der).decode("ascii")
+          lines = "\n".join(b64[i:i+64] for i in range(0, len(b64), 64))
+          pem = f"-----BEGIN CERTIFICATE-----\n{lines}\n-----END CERTIFICATE-----\n"
+          pathlib.Path("manifest.ci.pem").write_text(pem, encoding="utf-8")
           PY
       - name: Create GitHub release
         env:
